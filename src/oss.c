@@ -3,39 +3,32 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "../include/util.h"
+#include "../include/pclock.h"
+#include "../include/sharedvals.h"
+
 
 #define MAX_PROCESS_COUNT 18
-
+#define MAX_TIME_BETWEEN_PROCS_NANO 20
+#define MAX_RUN_TIME_SECONDS 10
+#define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
+#define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 10
 
 void terminate_program();
 
-static pid_t children[MAX_PROCESS_COUNT];
-
-
 int main(int argc, char* argv[]) {
-    int i;
-
-    pid_t current_fork_value;
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        children[i] = (current_fork_value = fork());
-        if (!current_fork_value) {
-            break;
-        }
+    init_clock(CLOCK_KEY);
+    while (get_total_tick() <= MAX_RUN_TIME_NANO) {
+        fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
+                get_seconds(), get_nano(), get_total_tick());
+        tick_clock(CLOCK_TICK_NANO);
     }
 
-    if (!current_fork_value) {
-        fprintf(stderr, "OSS: Child of %ld, %ld\n",
-                (long) getppid(), (long) getpid());
-    }
-
-    sleep(5);
+    destruct_clock();
     return 0;
 }
 
 
 void terminate_program() {
-    int i;
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        kill(children[i], SIGKILL);
-    }
+    destruct_clock();
 }
