@@ -22,6 +22,11 @@ static struct sembuf semunlock;
 static pclock_t* system_clock;
 
 
+/* Initialize and/or attach shared memory. Should
+ * be called in both parent and child. First proc
+ * to call it create the shared memory. All others
+ * just attach it. 
+ */
 int init_clock(int key) {
     setsembuf(&semlock, 0, -1, 0);
     setsembuf(&semunlock, 0, 1, 0);
@@ -59,6 +64,9 @@ int init_clock(int key) {
 }
 
 
+/* Remove semaphores and sharded memory for the system
+ * clock. Should only be called in a parent process.
+ */
 int destruct_clock() {
     if (removesem(semid) == -1) {
         return -1;
@@ -143,6 +151,7 @@ unsigned int get_nano() {
 
 unsigned long get_total_tick() {
     if (semop(semid, &semlock, 1) == -1) {
+        perror("Error in semlock");
         return 0;
     }
     unsigned long t = system_clock->total_tick;
