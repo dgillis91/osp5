@@ -6,12 +6,13 @@
 #include "../include/util.h"
 #include "../include/pclock.h"
 #include "../include/sharedvals.h"
+#include "../include/procutil.h"
 
 
 #define MAX_PROCESS_COUNT 3
 
 #define MAX_TIME_BETWEEN_PROCS_NANO 20
-#define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 10
+#define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 1000
 
 #define MAX_RUN_TIME_SECONDS 5
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
@@ -19,16 +20,19 @@
 void terminate_program();
 unsigned long compute_random_next_init_time(unsigned long current_time_nano);
 
+static int proc_shid;
+
 int main(int argc, char* argv[]) {
     int current_process_count = 0;
 
     init_clock(CLOCK_KEY);
+    proc_shid = init_proc_handle(PROC_KEY);
 
     unsigned long current_time_nano;
     unsigned long next_process_init_time = MAX_TIME_BETWEEN_PROCS_NANO;
+    // Main clock loop
     while ((current_time_nano = get_total_tick()) <= MAX_RUN_TIME_NANO) {
         // Spawn processes off at randomish times
-
         int is_time_to_init_new_proc = (current_time_nano >= next_process_init_time);
         int not_at_process_limit = (current_process_count < MAX_PROCESS_COUNT);
         if (is_time_to_init_new_proc && not_at_process_limit) {
@@ -47,6 +51,13 @@ int main(int argc, char* argv[]) {
             }
             next_process_init_time = compute_random_next_init_time(current_time_nano);
         }
+        if (get_count_procs_ready_terminate() > 0) {
+            int stat;
+            mark_terminate();
+            pid_t wait_pid = wait(&stat);
+            fprintf(stderr, "OSS: [%lu] is terminating at %u.%u\n",
+                    (long) wait_pid, get_seconds(), get_nano());
+        }
 
         fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
                 get_seconds(), get_nano(), current_time_nano);
@@ -56,6 +67,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "OSS: Sleep\n");
     sleep(10);
     destruct_clock();
+    destruct_proc_handle(proc_shid);
     return 0;
 }
 
