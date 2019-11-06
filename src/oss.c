@@ -14,7 +14,7 @@
 #define MAX_TIME_BETWEEN_PROCS_NANO 20
 #define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 1000
 
-#define MAX_RUN_TIME_SECONDS 5
+#define MAX_RUN_TIME_SECONDS 2
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
 
 void terminate_program();
@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
             pid_t wait_pid = wait(&stat);
             fprintf(stderr, "OSS: [%lu] is terminating at %u.%u\n",
                     (long) wait_pid, get_seconds(), get_nano());
+            --current_process_count;
         }
 
         fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",

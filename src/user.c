@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "../include/pclock.h"
@@ -25,11 +27,11 @@ int is_should_terminate() {
  * second. Else, it will be the random
  * time plus the current tick.
 */
-unsigned long long next_termination_check_time(unsigned long long current_tick) {
+unsigned long long next_termination_check_time(unsigned long long current_tick, unsigned long long start_time) {
     int term_check_add = rand_below(250);
     // We only check if we are past one second
-    if (current_tick <= NANO_SEC_IN_SEC) {
-        return term_check_add + NANO_SEC_IN_SEC;
+    if ((current_tick - start_time) <= NANO_SEC_IN_SEC) {
+        return term_check_add + NANO_SEC_IN_SEC + current_tick;
     }
     return current_tick + term_check_add;
 }
@@ -38,14 +40,18 @@ unsigned long long next_termination_check_time(unsigned long long current_tick) 
 int main(int argc, char* argv[]) {
     init_clock(CLOCK_KEY);
     int proc_shid = init_proc_handle(PROC_KEY);
+    srand(time(NULL) ^ (getpid() << 16));
     unsigned long long current_tick = get_total_tick();
-    unsigned long long next_term_check_time = next_termination_check_time(current_tick);
+    unsigned long long start_time = current_tick;
+    unsigned long long next_term_check_time = next_termination_check_time(current_tick, start_time);
 
     while (1) {
         current_tick = get_total_tick();
 
         if (next_term_check_time >= current_tick) {
-            next_term_check_time = next_termination_check_time(current_tick);
+            next_term_check_time = next_termination_check_time(current_tick, start_time);
+            fprintf(stderr, "[I] USER: PID %ld Next term check time: %llu\n", 
+                    (long) getpid(), next_term_check_time);
             if (is_should_terminate()) {
                 fprintf(stderr, "[+] USER: Terminating PID %ld at %lld\n",
                         (long) getpid(), current_tick);
