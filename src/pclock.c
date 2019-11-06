@@ -77,18 +77,6 @@ int destruct_clock() {
     return 1;
 }
 
-
-/* Return a copy of the system clock into `copy`*/
-int get_copy_of_system_clock(pclock_t* copy) {
-    if (semop(semid, &semlock, 1) == -1) 
-        return -1;
-    copy->total_tick = system_clock->total_tick;
-    if (semop(semid, &semunlock, 1) == -1)
-        return -1;
-    return 1;
-}
-
-
 /* Increment the system clock by `nanoseconds`.
  * Method synchronizes access to `system_clock`.
 */
@@ -117,46 +105,19 @@ void clock_add_in_place(pclock_t* clock, unsigned long nanoseconds) {
 }
 
 
-int is_equal_to_sys_clock(pclock_t clock) {
-    if (semop(semid, &semlock, 1) == -1) 
-        return -1;
-    int is_equal = clock.total_tick == system_clock->total_tick;
-    if (semop(semid, &semunlock, 1) == -1)
-        return -1;
-    return is_equal;
-}
-
-
 unsigned int get_seconds() {
-    if (semop(semid, &semlock, 1) == -1)
-        return 0;
     unsigned long n = system_clock->total_tick;
-    if (semop(semid, &semunlock, 1) == -1)
-        return 0;
     return n / NANO_SEC_IN_SEC;
 }
 
 
 unsigned int get_nano() {
-    if (semop(semid, &semlock, 1) == -1) {
-        return 0;
-    }
     unsigned long n = system_clock->total_tick;
-    if (semop(semid, &semunlock, 1) == -1) {
-        return 0;
-    }
     return n % NANO_SEC_IN_SEC;
 }
 
 
 unsigned long get_total_tick() {
-    if (semop(semid, &semlock, 1) == -1) {
-        perror("Error in semlock");
-        return 0;
-    }
     unsigned long t = system_clock->total_tick;
-    if (semop(semid, &semunlock, 1) == -1) {
-        return 0;
-    }
     return t;
 }

@@ -21,11 +21,9 @@ typedef struct {
 
 int init_clock(int);
 int destruct_clock();
-int get_copy_of_system_clock(pclock_t*);
 int tick_clock(unsigned long);
 pclock_t clock_add(pclock_t, unsigned long);
 void clock_add_in_place(pclock_t*, unsigned long);
-int is_equal_to_sys_clock(pclock_t);
 unsigned int get_seconds();
 unsigned int get_nano();
 unsigned long get_total_tick();
