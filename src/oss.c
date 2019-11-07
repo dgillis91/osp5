@@ -7,6 +7,7 @@
 #include "../include/pclock.h"
 #include "../include/sharedvals.h"
 #include "../include/procutil.h"
+#include "../include/parse.h"
 
 
 #define MAX_PROCESS_COUNT 3
@@ -17,7 +18,6 @@
 #define MAX_RUN_TIME_SECONDS 2
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
 
-#define MAX_ACTUAL_RUN_TIME_SECONDS 5
 
 void terminate_program();
 unsigned long compute_random_next_init_time(unsigned long current_time_nano);
@@ -26,6 +26,8 @@ void sig_handler(int signum);
 static int proc_shid;
 
 int main(int argc, char* argv[]) {
+    parse_options(argc, argv);
+
     int current_process_count = 0;
 
     init_clock(CLOCK_KEY);
@@ -38,7 +40,7 @@ int main(int argc, char* argv[]) {
     if (signal(SIGALRM, sig_handler) == SIG_ERR) {
         perror("OSS: Fail to set SIGALRM");
     }
-    alarm(MAX_ACTUAL_RUN_TIME_SECONDS);
+    alarm(get_allowable_run_time());
 
     unsigned long current_time_nano;
     unsigned long next_process_init_time = MAX_TIME_BETWEEN_PROCS_NANO;
