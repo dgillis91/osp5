@@ -17,8 +17,11 @@
 #define MAX_RUN_TIME_SECONDS 2
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
 
+#define MAX_ACTUAL_RUN_TIME_SECONDS 5
+
 void terminate_program();
 unsigned long compute_random_next_init_time(unsigned long current_time_nano);
+void sig_handler(int signum);
 
 static int proc_shid;
 
@@ -27,6 +30,15 @@ int main(int argc, char* argv[]) {
 
     init_clock(CLOCK_KEY);
     proc_shid = init_proc_handle(PROC_KEY);
+
+    if (signal(SIGINT, sig_handler) == SIG_ERR) {
+        perror("OSS: Fail to set SIGINT");
+    }
+
+    if (signal(SIGALRM, sig_handler) == SIG_ERR) {
+        perror("OSS: Fail to set SIGALRM");
+    }
+    alarm(MAX_ACTUAL_RUN_TIME_SECONDS);
 
     unsigned long current_time_nano;
     unsigned long next_process_init_time = MAX_TIME_BETWEEN_PROCS_NANO;
@@ -60,8 +72,8 @@ int main(int argc, char* argv[]) {
             --current_process_count;
         }
 
-        fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
-                get_seconds(), get_nano(), current_time_nano);
+        //fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
+        //        get_seconds(), get_nano(), current_time_nano);
         tick_clock(CLOCK_TICK_NANO);
     }
 
@@ -73,8 +85,23 @@ int main(int argc, char* argv[]) {
 }
 
 
+void sig_handler(int signum) {
+    if (signum == SIGINT) {
+        fprintf(stderr, "[!] OSS: Killing all from SIGINT\n");
+    } else if (signum == SIGALRM) {
+        fprintf(stderr, "[!] OSS: Killing all from SIGALRM\n");
+    } else {
+        fprintf(stderr, "[!] OSS: Killing all from unkown signal\n");
+    }
+    terminate_program();
+}
+
+
 void terminate_program() {
+    destruct_proc_handle(proc_shid);
     destruct_clock();
+    kill(0, SIGKILL);
+    exit(1);
 }
 
 
