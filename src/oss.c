@@ -85,6 +85,8 @@ int main(int argc, char* argv[]) {
             int stat;
             mark_terminate();
             pid_t wait_pid = wait(&stat);
+            int ind = index_of_pid(wait_pid);
+            clear_process_from_resource_descriptors(ind);
             unset_pid(wait_pid);
             dprintf(out_fd, "OSS: [%lu] is terminating at %u.%u\n",
                     (long) wait_pid, get_seconds(), get_nano());

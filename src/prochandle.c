@@ -60,6 +60,20 @@ int unset_pid(pid_t pid) {
 }
 
 
+/* Return the index of `pid` if it exists
+ * in the `process_handle`, else -1.
+ */
+int index_of_pid(pid_t pid) {
+    int i;
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        if (process_handle[i] == pid) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 void print_proc_handle(int out_fd) {
     int i;
     dprintf(out_fd, "OSS: process_handle = ");

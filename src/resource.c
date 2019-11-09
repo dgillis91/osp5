@@ -118,6 +118,15 @@ void print_resource_descriptors(int fd) {
         }
         dprintf(fd, "|\n");
     }
+    /* REQUESTED */
+    dprintf(fd, "OSS: REQUESTED:\n");
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        for (j = 0; j < RESOURCE_COUNT; ++j) {
+            dprintf(fd, "|%d",
+                    descriptors->requested[i][j]);
+        }
+        dprintf(fd, "|\n");
+    }
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;
@@ -137,7 +146,32 @@ static void initialize_resource_tables() {
         for (j = 0; j < MAX_PROCESS_COUNT; ++j) {
             descriptors->maximum_claim[j][i] = 0;
             descriptors->allocated[j][i] = 0;
+            descriptors->requested[j][i] = 0;
             descriptors->needed_max_less_allocated[j][i] = 0;
         }
+    }
+}
+
+
+void clear_process_from_resource_descriptors(int pid) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    const int ROW = pid;
+    int col, alloc;
+
+    for (col = 0; col < RESOURCE_COUNT; ++col) {
+        descriptors->maximum_claim[ROW][col] = 0;
+        // Give the resources back
+        alloc = descriptors->allocated[ROW][col];
+        descriptors->available[col] += alloc;
+        descriptors->allocated[ROW][col] = 0;
+        // Clear out the requests
+        descriptors->requested[ROW][col] = 0;
+    }
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
     }
 }

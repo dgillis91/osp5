@@ -14,11 +14,14 @@ typedef struct resource_descriptors {
     unsigned int maximum_claim[MAX_PROCESS_COUNT][RESOURCE_COUNT];
     unsigned int allocated[MAX_PROCESS_COUNT][RESOURCE_COUNT];
     unsigned int needed_max_less_allocated[MAX_PROCESS_COUNT][RESOURCE_COUNT];
+    unsigned int requested[MAX_PROCESS_COUNT][RESOURCE_COUNT];
     sig_atomic_t ready;
 } resource_descriptors_t;
 
 int init_resource_descriptors(int key);
 int destruct_resource_descriptors();
 void print_resource_descriptors(int fd);
+void clear_process_from_resource_descriptors(int pid);
+
 
 #endif
