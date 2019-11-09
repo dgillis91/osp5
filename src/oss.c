@@ -8,10 +8,9 @@
 #include "../include/pclock.h"
 #include "../include/sharedvals.h"
 #include "../include/procutil.h"
+#include "../include/prochandle.h"
 #include "../include/parse.h"
 
-
-#define MAX_PROCESS_COUNT 3
 
 #define MAX_TIME_BETWEEN_PROCS_NANO 20
 #define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 1000
@@ -23,17 +22,6 @@
 
 void terminate_program();
 unsigned long compute_random_next_init_time(unsigned long current_time_nano);
-
-/* Functions to deal with a process handle, 
- * mapping a integer (index) to a pid.
-*/
-static pid_t process_handle[MAX_PROCESS_COUNT];
-void initialize_process_handle();
-int get_first_unset_pid();
-int set_first_unset_pid(pid_t pid);
-int unset_pid(pid_t pid);
-void print_proc_handle();
-
 
 void sig_handler(int signum);
 
@@ -79,7 +67,7 @@ int main(int argc, char* argv[]) {
                 dprintf(out_fd, "OSS: Forking child [%ld] at: [%u:%uT%lu]\n",
                         (long) current_fork_value, get_seconds(), 
                         get_nano(), current_time_nano);
-                print_proc_handle();
+                print_proc_handle(out_fd);
             }
             
             if (!current_fork_value) {
@@ -96,7 +84,7 @@ int main(int argc, char* argv[]) {
             dprintf(out_fd, "OSS: [%lu] is terminating at %u.%u\n",
                     (long) wait_pid, get_seconds(), get_nano());
             --current_process_count;
-            print_proc_handle();
+            print_proc_handle(out_fd);
         }
 
         //fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
@@ -137,67 +125,4 @@ void terminate_program() {
 unsigned long compute_random_next_init_time(unsigned long current_time_nano) {
     int time_until_next_proc = rand_below(MAX_TIME_BETWEEN_PROCS_NANO);
     return current_time_nano + time_until_next_proc;
-}
-
-
-/* Initialize all pids to 0.
- */
-void initialize_process_handle() {
-    int i; 
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        process_handle[i] = (pid_t) 0;
-    }
-}
-
-/* Return the first index of an unset pid in
- * the `process_handle`. Returns -1 if full.
- */
-int get_first_unset_pid() {
-    int i;
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        if (process_handle[i] == (pid_t) 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-
-/* Set the first empty spot in the `process_handle`.
- * Return 1 on success, -1 on full.
- */
-int set_first_unset_pid(pid_t pid) {
-    int i;
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        if (process_handle[i] == (pid_t) 0) {
-            process_handle[i] = pid;
-            return 1;
-        }
-    }
-    return -1;
-}
-
-
-/* Set `pid` to 0 in `process_table`. Returns -1
- * if `pid` not found.
- */
-int unset_pid(pid_t pid) {
-    int i;
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        if (process_handle[i] == pid) {
-            process_handle[i] = (pid_t) 0;
-            return 1;
-        }
-    }
-    return -1;
-}
-
-
-void print_proc_handle() {
-    int i;
-    dprintf(out_fd, "OSS: process_handle = ");
-    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
-        dprintf(out_fd, "|%ld", (long) process_handle[i]);
-    }
-    dprintf(out_fd, "|\n");
 }
