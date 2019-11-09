@@ -29,6 +29,7 @@ static int proc_shid;
 static int out_fd;
 
 int main(int argc, char* argv[]) {
+    init_prog_opts(OPT_KEY);
     parse_options(argc, argv);
 
     if (!CONSOLE_OUT) {
@@ -96,6 +97,7 @@ int main(int argc, char* argv[]) {
     sleep(10);
     destruct_clock();
     destruct_proc_handle(proc_shid);
+    destruct_prog_opts();
     close(out_fd);
     return 0;
 }
@@ -116,6 +118,7 @@ void sig_handler(int signum) {
 void terminate_program() {
     destruct_proc_handle(proc_shid);
     destruct_clock();
+    destruct_prog_opts();
     close(out_fd);
     kill(0, SIGKILL);
     exit(1);
