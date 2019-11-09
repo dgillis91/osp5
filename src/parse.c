@@ -2,10 +2,56 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+
 #include "../include/parse.h"
+#include "../include/sharedvals.h"
+#include "../include/shmutil.h"
+
+#define OPT_PERM (S_IRUSR | S_IWUSR)
+
+static int shid;
+
+static program_options_t* prog_options_shared;
 
 
-static program_options_t global_program_options;
+int init_prog_opts(int key) {
+    shid = shmget(key, sizeof(program_options_t), OPT_PERM | IPC_CREAT | IPC_EXCL);
+
+    // Couldn't gedt shared memory, and there's a real error.
+    if ((shid == -1) && errno != EEXIST) {
+        return -1;
+    }
+
+    // Already created. Attach. 
+    if (shid == -1) {
+        // Access
+        if ((shid = shmget(key, sizeof(program_options_t), OPT_PERM)) == -1) {
+            return -1;
+        }
+        // Attach
+        if ((prog_options_shared = (program_options_t*) shmat(shid, NULL, 0)) == (void*)(-1)) {
+            return -1;
+        }
+    } else {
+        // Create in the first shmget call. 
+        prog_options_shared = (program_options_t*) shmat(shid, NULL, 0);
+        if (prog_options_shared == (void*)(-1)) {
+            return -1;
+        }
+    }
+    return 1;
+}
+
+
+int destruct_prog_opts() {
+    if (detachandremove(shid, prog_options_shared) == -1) {
+        return -1;
+    }
+    return 1;
+}
 
 
 void print_help_and_terminate(char* program_name) {
@@ -47,13 +93,13 @@ void parse_options(int argc, char* argv[]) {
             print_help_and_terminate(argv[0]);
             break;
         case 'm':
-            global_program_options.max_time_between_requests = atoi(optarg);
+            prog_options_shared->max_time_between_requests = atoi(optarg);
             break;
         case 'l':
-            strcpy(global_program_options.logfile_path, optarg);
+            strcpy(prog_options_shared->logfile_path, optarg);
             break;
         case 't':
-            global_program_options.allowable_run_time = atol(optarg);
+            prog_options_shared->allowable_run_time = atol(optarg);
             break;
         // From the man page:
         //  By default, getopt() prints an error message on standard error,
@@ -82,22 +128,22 @@ void parse_options(int argc, char* argv[]) {
 
 
 void set_default_program_options() {
-    global_program_options.allowable_run_time = 10L;
-    global_program_options.max_time_between_requests = 500;
-    strcpy(global_program_options.logfile_path, "log.txt");
+    prog_options_shared->allowable_run_time = 10L;
+    prog_options_shared->max_time_between_requests = 500;
+    strcpy(prog_options_shared->logfile_path, "log.txt");
 }
 
 
 unsigned int get_allowable_run_time() {
-    return global_program_options.allowable_run_time;
+    return prog_options_shared->allowable_run_time;
 }
 
 
 unsigned int get_max_time_between_requests() {
-    return global_program_options.max_time_between_requests;
+    return prog_options_shared->max_time_between_requests;
 }
 
 
 const char* get_logfile_path() {
-    return global_program_options.logfile_path;
+    return prog_options_shared->logfile_path;
 }

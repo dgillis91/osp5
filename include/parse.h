@@ -9,6 +9,8 @@ typedef struct program_options {
 } program_options_t;
 
 
+int init_prog_opts(int key);
+int destruct_prog_opts();
 void parse_options(int, char**);
 void print_help_and_terminate(char*);
 void set_default_program_options();
