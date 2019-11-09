@@ -10,7 +10,7 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 _OBJ = oss.o shmutil.o semutil.o pclock.o util.o procutil.o parse.o prochandle.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-_USER = user.o shmutil.o semutil.o pclock.o util.o procutil.o
+_USER = user.o shmutil.o semutil.o pclock.o util.o procutil.o parse.o
 USER = $(patsubst %,$(ODIR)/%,$(_USER))
 
 
