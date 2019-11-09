@@ -9,6 +9,7 @@
 #include "../include/sharedvals.h"
 #include "../include/procutil.h"
 #include "../include/prochandle.h"
+#include "../include/resource.h"
 #include "../include/parse.h"
 
 
@@ -42,7 +43,9 @@ int main(int argc, char* argv[]) {
 
     init_clock(CLOCK_KEY);
     proc_shid = init_proc_handle(PROC_KEY);
+    init_resource_descriptors(RES_KEY);
     initialize_process_handle();
+    
 
     if (signal(SIGINT, sig_handler) == SIG_ERR) {
         perror("OSS: Fail to set SIGINT");
@@ -98,6 +101,7 @@ int main(int argc, char* argv[]) {
     destruct_clock();
     destruct_proc_handle(proc_shid);
     destruct_prog_opts();
+    destruct_resource_descriptors();
     close(out_fd);
     return 0;
 }
@@ -119,6 +123,7 @@ void terminate_program() {
     destruct_proc_handle(proc_shid);
     destruct_clock();
     destruct_prog_opts();
+    destruct_resource_descriptors();
     close(out_fd);
     kill(0, SIGKILL);
     exit(1);
