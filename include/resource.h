@@ -19,6 +19,6 @@ typedef struct resource_descriptors {
 
 int init_resource_descriptors(int key);
 int destruct_resource_descriptors();
-void print_resource_descriptors(char* filepath);
+void print_resource_descriptors(int fd);
 
 #endif

@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
     proc_shid = init_proc_handle(PROC_KEY);
     init_resource_descriptors(RES_KEY);
     initialize_process_handle();
+    print_resource_descriptors(out_fd);
     
 
     if (signal(SIGINT, sig_handler) == SIG_ERR) {

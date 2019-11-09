@@ -2,6 +2,7 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "../include/resource.h"
@@ -72,8 +73,55 @@ int destruct_resource_descriptors() {
 }
 
 
-void print_resource_descriptors(char* filepath) {
-    
+void print_resource_descriptors(int fd) {
+    int i, j;
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    /* TOTAL */
+    dprintf(fd, "OSS: TOTAL:\n");
+    for (i = 0; i < RESOURCE_COUNT; ++i) {
+        dprintf(fd, "|%d", descriptors->total[i]);
+    }
+    dprintf(fd, "|\n");
+    /* AVAILABLE */
+    dprintf(fd, "OSS: AVAILABLE:\n");
+    for (i = 0; i < RESOURCE_COUNT; ++i) {
+        dprintf(fd, "|%d", descriptors->available[i]);
+    }
+    dprintf(fd, "|\n");
+    /* MAXIMUM CLAIM */
+    dprintf(fd, "OSS: MAXIMUM CLAIMS:\n");
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        for (j = 0; j < RESOURCE_COUNT; ++j) {
+            dprintf(fd, "|%d",
+                    descriptors->maximum_claim[i][j]);
+        }
+        dprintf(fd, "|\n");
+    }
+    /* ALLOCATED */
+    dprintf(fd, "OSS: ALLOCATED:\n");
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        for (j = 0; j < RESOURCE_COUNT; ++j) {
+            dprintf(fd, "|%d",
+                    descriptors->allocated[i][j]);
+        }
+        dprintf(fd, "|\n");
+    }
+    /* NEEDED */
+    dprintf(fd, "OSS: NEEDED:\n");
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        for (j = 0; j < RESOURCE_COUNT; ++j) {
+            dprintf(fd, "|%d",
+                    descriptors->needed_max_less_allocated[i][j]);
+        }
+        dprintf(fd, "|\n");
+    }
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
+    }
 }
 
 
