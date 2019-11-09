@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include "../include/util.h"
 #include "../include/pclock.h"
@@ -17,6 +18,7 @@
 
 #define MAX_RUN_TIME_SECONDS 2
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
+#define CONSOLE_OUT 0
 
 
 void terminate_program();
@@ -24,9 +26,16 @@ unsigned long compute_random_next_init_time(unsigned long current_time_nano);
 void sig_handler(int signum);
 
 static int proc_shid;
+static int out_fd;
 
 int main(int argc, char* argv[]) {
     parse_options(argc, argv);
+
+    if (!CONSOLE_OUT) {
+        out_fd = open(get_logfile_path(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    } else {
+        out_fd = STDERR_FILENO;
+    }
 
     int current_process_count = 0;
 
@@ -54,7 +63,7 @@ int main(int argc, char* argv[]) {
             pid_t current_fork_value = fork();
             
             if (current_fork_value) {
-                fprintf(stderr, "OSS: Forking child [%ld] at: [%u:%uT%lu]\n",
+                dprintf(out_fd, "OSS: Forking child [%ld] at: [%u:%uT%lu]\n",
                         (long) current_fork_value, get_seconds(), 
                         get_nano(), current_time_nano);
             }
@@ -69,7 +78,7 @@ int main(int argc, char* argv[]) {
             int stat;
             mark_terminate();
             pid_t wait_pid = wait(&stat);
-            fprintf(stderr, "OSS: [%lu] is terminating at %u.%u\n",
+            dprintf(out_fd, "OSS: [%lu] is terminating at %u.%u\n",
                     (long) wait_pid, get_seconds(), get_nano());
             --current_process_count;
         }
@@ -79,21 +88,22 @@ int main(int argc, char* argv[]) {
         tick_clock(CLOCK_TICK_NANO);
     }
 
-    fprintf(stderr, "OSS: Sleep\n");
+    dprintf(out_fd, "OSS: Sleep\n");
     sleep(10);
     destruct_clock();
     destruct_proc_handle(proc_shid);
+    close(out_fd);
     return 0;
 }
 
 
 void sig_handler(int signum) {
     if (signum == SIGINT) {
-        fprintf(stderr, "[!] OSS: Killing all from SIGINT\n");
+        dprintf(out_fd, "[!] OSS: Killing all from SIGINT\n");
     } else if (signum == SIGALRM) {
-        fprintf(stderr, "[!] OSS: Killing all from SIGALRM\n");
+        dprintf(out_fd, "[!] OSS: Killing all from SIGALRM\n");
     } else {
-        fprintf(stderr, "[!] OSS: Killing all from unkown signal\n");
+        dprintf(out_fd, "[!] OSS: Killing all from unkown signal\n");
     }
     terminate_program();
 }
@@ -102,6 +112,7 @@ void sig_handler(int signum) {
 void terminate_program() {
     destruct_proc_handle(proc_shid);
     destruct_clock();
+    close(out_fd);
     kill(0, SIGKILL);
     exit(1);
 }
