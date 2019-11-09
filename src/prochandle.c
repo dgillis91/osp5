@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdio.h>
 
 #include "../include/prochandle.h"
 #include "../include/sharedvals.h"
