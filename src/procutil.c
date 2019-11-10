@@ -107,36 +107,3 @@ int mark_terminate() {
     return 1;
 }
 
-
-/* Allows the child process to be notified that
- * the parent wishes to terminate.
- */
-int get_is_abrupt_terminate() {
-    int is_term;
-    if (semop(semid, &semlock, 1) == -1)
-        return -1;
-    is_term = proc_handle->is_abrupt_terminate;
-    if (semop(semid, &semunlock, 1) == -1)
-        return -1;
-    return is_term;
-}
-
-
-int set_is_abrupt_terminate() {
-    if (semop(semid, &semlock, 1) == -1)
-        return -1;
-    proc_handle->is_abrupt_terminate = 1;
-    if (semop(semid, &semunlock, 1) == -1) 
-        return -1;
-    return 1;
-}
-
-
-int unset_is_abrupt_terminate() {
-    if (semop(semid, &semlock, 1) == -1)
-        return -1;
-    proc_handle->is_abrupt_terminate = 0;
-    if (semop(semid, &semunlock, 1) == -1)
-        return -1;
-    return 1;
-}

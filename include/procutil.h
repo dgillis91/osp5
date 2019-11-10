@@ -18,9 +18,6 @@ unsigned int get_procs_ready_to_terminate();
 int mark_ready_to_terminate();
 unsigned int get_count_procs_ready_terminate();
 int mark_terminate();
-int get_is_abrupt_terminate();
-int set_is_abrupt_terminate();
-int unset_is_abrupt_terminate();
 
 
 #endif
