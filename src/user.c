@@ -5,6 +5,7 @@
 
 #include "../include/pclock.h"
 #include "../include/sharedvals.h"
+#include "../include/parse.h"
 #include "../include/util.h"
 #include "../include/procutil.h"
 
@@ -40,7 +41,12 @@ unsigned long long next_termination_check_time(unsigned long long current_tick, 
 int main(int argc, char* argv[]) {
     init_clock(CLOCK_KEY);
     int proc_shid = init_proc_handle(PROC_KEY);
+    init_prog_opts(OPT_KEY);
+    
     srand(time(NULL) ^ (getpid() << 16));
+    
+    const int MAX_TIME_BETWEEN_REQ = get_max_time_between_requests();
+
     unsigned long long current_tick = get_total_tick();
     unsigned long long start_time = current_tick;
     unsigned long long next_term_check_time = next_termination_check_time(current_tick, start_time);
