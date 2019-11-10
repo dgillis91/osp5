@@ -175,6 +175,7 @@ void clear_process_from_resource_descriptors(int pid) {
         // Clear out the max requests
         descriptors->maximum_claim[ROW][col] = 0;
     }
+    descriptors->has_request[pid] = 0;
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;
@@ -201,6 +202,7 @@ void make_request(int pid, int* local_req_buffer) {
     local_req_buffer[random_resource] += rand_request;
     descriptors->requested[pid][random_resource] += rand_request;
 
+    descriptors->has_request[pid] = 1;
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;

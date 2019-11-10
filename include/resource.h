@@ -8,6 +8,7 @@
 #define RESOURCE_COUNT 20
 
 typedef struct resource_descriptors {
+    int has_request[MAX_PROCESS_COUNT];
     int is_shared[RESOURCE_COUNT];
     unsigned int total[RESOURCE_COUNT];
     unsigned int available[RESOURCE_COUNT];
