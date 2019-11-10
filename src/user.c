@@ -11,6 +11,7 @@
 #include "../include/procutil.h"
 
 #define PROBABILITY_TERMINATE 20
+#define PROBABILITY_REQUEST 60
 
 
 /* Return true if the process should terminate.
@@ -22,6 +23,11 @@ int is_should_terminate() {
     return (random < PROBABILITY_TERMINATE);
 }
 
+
+int is_should_request() {
+    int random = rand_below(100);
+    return (random < PROBABILITY_REQUEST);
+}
 
 /* Return a random time to terminate.
  * If the `current_tick_ns` is less than
@@ -86,9 +92,15 @@ int main(int argc, char* argv[]) {
             // Generate random resource to request. Ensure it's not above
             // our max claims. 
             next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
-            fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
-                    (long) getpid(), current_tick);
-            make_request(abstract_pid, local_requested);
+            if (is_should_request()) {
+                fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
+                        (long) getpid(), current_tick);
+                make_request(abstract_pid, local_requested);
+            } else {
+                fprintf(stderr, "[+] USER: Releasing resources in PID %ld at %lld\n",
+                        (long) getpid(), current_tick);
+                make_release(abstract_pid);
+            }
         }
     }
 

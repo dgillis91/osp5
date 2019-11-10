@@ -208,6 +208,32 @@ void make_request(int pid, int* local_req_buffer) {
 }
 
 
+void make_release(int pid) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    int random_resource = rand_below(RESOURCE_COUNT);
+
+    int allocated = descriptors->allocated[pid][random_resource];
+    
+    int rand_release;
+    if (allocated > 0) {
+        rand_release = rand_below(allocated + 1);
+    } else {
+        rand_release = 0;
+    }
+
+    descriptors->allocated[pid][random_resource] -= rand_release;
+    descriptors->available[random_resource] += rand_release;
+
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
+    }
+}
+
+
 void get_max_claims(int* buffer_array, int pid) {
     if (semop(semid, &semlock, 1) == -1) {
         perror("resource: fail to get semlock");
