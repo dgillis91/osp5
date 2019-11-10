@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 
