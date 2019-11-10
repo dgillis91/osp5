@@ -50,18 +50,21 @@ int main(int argc, char* argv[]) {
     int proc_shid = init_proc_handle(PROC_KEY);
     init_prog_opts(OPT_KEY);
     init_resource_descriptors(RES_KEY);
-    
+
     srand(time(NULL) ^ (getpid() << 16));
-    
+
+    int abstract_pid = index_of_pid(getpid());
+
+    int local_requested[20];
+    int local_max_claims[20];
+    get_max_claims(local_max_claims, abstract_pid);
+
     const int MAX_TIME_BETWEEN_REQ = get_max_time_between_requests();
 
     unsigned long long current_tick = get_total_tick();
     unsigned long long start_time = current_tick;
     unsigned long long next_term_check_time = next_termination_check_time(current_tick, start_time);
     unsigned long long next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
-    fprintf(stderr, "USER: Current Tick: %llu\n", current_tick);
-    fprintf(stderr, "USER: Next req time %llu\n", next_req_time);
-    fprintf(stderr, "USER: Next check time %llu\n", next_term_check_time);
 
     while (1) {
         current_tick = get_total_tick();
@@ -80,10 +83,12 @@ int main(int argc, char* argv[]) {
             }
         }
         if (next_req_time <= current_tick) {
+            // Generate random resource to request. Ensure it's not above
+            // our max claims. 
             next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
             fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
                     (long) getpid(), current_tick);
-            make_request(index_of_pid(getpid()), 5, 1);
+            make_request(abstract_pid, 5, 1);
         }
     }
 

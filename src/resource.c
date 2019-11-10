@@ -193,3 +193,21 @@ void make_request(int pid, int resource, int amount) {
         return;
     }
 }
+
+
+void get_max_claims(int* buffer_array, int pid) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    int i, current_claim;
+    for (i = 0; i < RESOURCE_COUNT; ++i) {
+        current_claim = rand_below(descriptors->total[i]);
+        descriptors->maximum_claim[pid][i] = current_claim;
+        buffer_array[i] = current_claim;
+    }
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
+    }
+}
