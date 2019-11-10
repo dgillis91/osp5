@@ -13,9 +13,9 @@
 
 
 #define MAX_TIME_BETWEEN_PROCS_NANO 20
-#define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 1000
+#define CLOCK_TICK_NANO NANO_SEC_IN_SEC / 100000
 
-#define MAX_RUN_TIME_SECONDS 2
+#define MAX_RUN_TIME_SECONDS 3
 #define MAX_RUN_TIME_NANO MAX_RUN_TIME_SECONDS * NANO_SEC_IN_SEC
 #define CONSOLE_OUT 0
 
@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
             unset_pid(wait_pid);
             dprintf(out_fd, "OSS: [%lu] is terminating at %u.%u\n",
                     (long) wait_pid, get_seconds(), get_nano());
+            print_resource_descriptors(out_fd);
             --current_process_count;
             print_proc_handle(out_fd);
         }
