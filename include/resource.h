@@ -22,7 +22,7 @@ int init_resource_descriptors(int key);
 int destruct_resource_descriptors();
 void print_resource_descriptors(int fd);
 void clear_process_from_resource_descriptors(int pid);
-void make_request(int pid, int resource, int amount);
+void make_request(int pid, int* local_req_buffer);
 void get_max_claims(int* buffer_array, int pid);
 
 #endif

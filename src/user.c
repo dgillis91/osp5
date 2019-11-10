@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
             next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
             fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
                     (long) getpid(), current_tick);
-            make_request(abstract_pid, 5, 1);
+            make_request(abstract_pid, local_requested);
         }
     }
 

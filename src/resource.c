@@ -182,12 +182,25 @@ void clear_process_from_resource_descriptors(int pid) {
 }
 
 
-void make_request(int pid, int resource, int amount) {
+void make_request(int pid, int* local_req_buffer) {
     if (semop(semid, &semlock, 1) == -1) {
         perror("resource: fail to get semlock");
         return;
     }
-    descriptors->requested[pid][resource] += amount;
+    int random_resource = rand_below(RESOURCE_COUNT);
+    int res_max_claim = descriptors->maximum_claim[pid][random_resource];
+    int allocated = descriptors->allocated[pid][random_resource];
+    int already_requested = descriptors->requested[pid][random_resource];
+    int resource_still_needed = res_max_claim - allocated;
+    int rand_request = rand_below(resource_still_needed + 1);
+
+    if (already_requested >= res_max_claim) {
+        rand_request = 0;
+    }
+
+    local_req_buffer[random_resource] += rand_request;
+    descriptors->requested[pid][random_resource] += rand_request;
+
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;
