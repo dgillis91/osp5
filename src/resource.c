@@ -2,6 +2,8 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -135,6 +137,7 @@ void print_resource_descriptors(int fd) {
 
 
 static void initialize_resource_tables() {
+    srand(time(NULL) ^ (getpid() << 16));
     int i, j;
     unsigned int total;
 
@@ -169,7 +172,22 @@ void clear_process_from_resource_descriptors(int pid) {
         descriptors->allocated[ROW][col] = 0;
         // Clear out the requests
         descriptors->requested[ROW][col] = 0;
+        // Clear out the max requests
+        descriptors->maximum_claim[ROW][col] = 0;
     }
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
+    }
+}
+
+
+void make_request(int pid, int resource, int amount) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    descriptors->requested[pid][resource] += amount;
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;
