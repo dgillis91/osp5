@@ -7,6 +7,7 @@
 #include "../include/sharedvals.h"
 #include "../include/parse.h"
 #include "../include/util.h"
+#include "../include/resource.h"
 #include "../include/procutil.h"
 
 #define PROBABILITY_TERMINATE 20
@@ -38,10 +39,17 @@ unsigned long long next_termination_check_time(unsigned long long current_tick, 
 }
 
 
+unsigned long long next_request_time(unsigned long long current_tick, int max_time_between) {
+    int time_add = rand_below(max_time_between);
+    return current_tick + time_add;
+}
+
+
 int main(int argc, char* argv[]) {
     init_clock(CLOCK_KEY);
     int proc_shid = init_proc_handle(PROC_KEY);
     init_prog_opts(OPT_KEY);
+    init_resource_descriptors(RES_KEY);
     
     srand(time(NULL) ^ (getpid() << 16));
     
@@ -50,14 +58,18 @@ int main(int argc, char* argv[]) {
     unsigned long long current_tick = get_total_tick();
     unsigned long long start_time = current_tick;
     unsigned long long next_term_check_time = next_termination_check_time(current_tick, start_time);
+    unsigned long long next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
+    fprintf(stderr, "USER: Current Tick: %llu\n", current_tick);
+    fprintf(stderr, "USER: Next req time %llu\n", next_req_time);
+    fprintf(stderr, "USER: Next check time %llu\n", next_term_check_time);
 
     while (1) {
         current_tick = get_total_tick();
 
-        if (next_term_check_time >= current_tick) {
+        if (next_term_check_time <= current_tick) {
             next_term_check_time = next_termination_check_time(current_tick, start_time);
-            fprintf(stderr, "[I] USER: PID %ld Next term check time: %llu\n", 
-                    (long) getpid(), next_term_check_time);
+            fprintf(stderr, "[I] USER: PID %ld Next term check time: %llu; current: %llu\n", 
+                    (long) getpid(), next_term_check_time, current_tick);
             if (is_should_terminate()) {
                 fprintf(stderr, "[+] USER: Terminating PID %ld at %lld\n",
                         (long) getpid(), current_tick);
@@ -66,6 +78,12 @@ int main(int argc, char* argv[]) {
             } else {
                 fprintf(stderr, "[-] USER: PID %ld at %lld\n", (long) getpid(), current_tick);
             }
+        }
+        if (next_req_time <= current_tick) {
+            next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
+            fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
+                    (long) getpid(), current_tick);
+            make_request(index_of_pid(getpid()), 5, 1);
         }
     }
 
