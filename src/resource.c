@@ -75,13 +75,9 @@ int destruct_resource_descriptors() {
 }
 
 
-void print_resource_descriptors(int fd) {
-    int i, j;
-    if (semop(semid, &semlock, 1) == -1) {
-        perror("resource: fail to get semlock");
-        return;
-    }
+static void internal_print(int fd) {
     /* TOTAL */
+    int i, j;
     dprintf(fd, "OSS: TOTAL:\n");
     for (i = 0; i < RESOURCE_COUNT; ++i) {
         dprintf(fd, "|%d", descriptors->total[i]);
@@ -129,6 +125,15 @@ void print_resource_descriptors(int fd) {
         }
         dprintf(fd, "|\n");
     }
+}
+
+
+void print_resource_descriptors(int fd) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    internal_print(fd);
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");
         return;
@@ -246,6 +251,86 @@ void get_max_claims(int* buffer_array, int pid) {
         current_claim = rand_below(descriptors->total[i]);
         descriptors->maximum_claim[pid][i] = current_claim;
         buffer_array[i] = current_claim;
+    }
+    if (semop(semid, &semunlock, 1) == -1) {
+        perror("resource: fail to get semunlock");
+        return;
+    }
+}
+
+
+void run_check(int fd) {
+    if (semop(semid, &semlock, 1) == -1) {
+        perror("resource: fail to get semlock");
+        return;
+    }
+    int i, j;
+
+    for (i = 0; i < MAX_PROCESS_COUNT; ++i) {
+        for (j = 0; j < RESOURCE_COUNT; ++j) {
+            int request = descriptors->requested[i][j];
+            if (request > 0) {
+                // Copy the allocations and make the need matrix.
+                int allocated[MAX_PROCESS_COUNT][RESOURCE_COUNT];
+                int m, n;
+                for (m = 0; m < MAX_PROCESS_COUNT; ++m) {
+                    for (n = 0; n < RESOURCE_COUNT; ++n) {
+                        allocated[m][n] = descriptors->allocated[m][n];
+                        descriptors->needed_max_less_allocated[m][n] = 
+                            descriptors->maximum_claim[m][n] - descriptors->allocated[m][n];
+                    }
+                }
+                allocated[i][j] += request;
+                // Run the banker's algorithm
+
+                // Initialize the finish and the work array
+                int finish[MAX_PROCESS_COUNT];
+                int work[RESOURCE_COUNT];
+                for (m = 0; m < MAX_PROCESS_COUNT; ++m) {
+                    finish[m] = 0;
+                }
+                for (m = 0; m < RESOURCE_COUNT; ++m) {
+                    work[m] = descriptors->available[m];
+                }
+
+                int count = 0;
+                while (count < MAX_PROCESS_COUNT) {
+                    int flag = 0;
+                    for (m = 0; m < MAX_PROCESS_COUNT; ++m) {
+                        if (!finish[m]) {
+                            for (n = 0; n < RESOURCE_COUNT; ++n) {
+                                if (descriptors->needed_max_less_allocated[m][n] > work[n]) {
+                                    break;
+                                }
+                            }
+                            if (n == RESOURCE_COUNT) {
+                                ++count;
+                                finish[m] = 1;
+                                flag = 1;
+
+                                for (n = 0; n < RESOURCE_COUNT; ++n) {
+                                    work[n] = work[n] + allocated[m][n];
+                                }
+                            }
+                        }
+                    }
+                    if (!flag) {
+                        break;
+                    }
+                }
+                if (count < MAX_PROCESS_COUNT) {
+                    dprintf(fd, "OSS: Unable to grant resource (%d) for id (%d)\n",
+                            j, i);
+                    internal_print(fd);
+                } else {
+                    dprintf(fd, "OSS: Able to grant resource (%d) for id (%d)\n",
+                            j, i);
+                    descriptors->allocated[i][j] += request;
+                    descriptors->available[j] -= request;
+                    internal_print(fd);
+                }
+            }
+        }
     }
     if (semop(semid, &semunlock, 1) == -1) {
         perror("resource: fail to get semunlock");

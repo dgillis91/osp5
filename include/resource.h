@@ -26,5 +26,6 @@ void clear_process_from_resource_descriptors(int pid);
 void make_request(int pid, int* local_req_buffer);
 void make_release(int pid);
 void get_max_claims(int* buffer_array, int pid);
+void run_check(int fd);
 
 #endif

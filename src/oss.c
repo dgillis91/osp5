@@ -95,6 +95,7 @@ int main(int argc, char* argv[]) {
 
         //fprintf(stderr, "OSS: Time [%u:%uT%lu]\n",
         //        get_seconds(), get_nano(), current_time_nano);
+        run_check(out_fd);
         tick_clock(CLOCK_TICK_NANO);
     }
 
