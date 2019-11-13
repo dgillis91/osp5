@@ -77,15 +77,15 @@ int main(int argc, char* argv[]) {
 
         if (next_term_check_time <= current_tick) {
             next_term_check_time = next_termination_check_time(current_tick, start_time);
-            fprintf(stderr, "[I] USER: PID %ld Next term check time: %llu; current: %llu\n", 
-                    (long) getpid(), next_term_check_time, current_tick);
+            //fprintf(stderr, "[I] USER: PID %ld Next term check time: %llu; current: %llu\n", 
+            //        (long) getpid(), next_term_check_time, current_tick);
             if (is_should_terminate()) {
-                fprintf(stderr, "[+] USER: Terminating PID %ld at %lld\n",
-                        (long) getpid(), current_tick);
+                //fprintf(stderr, "[+] USER: Terminating PID %ld at %lld\n",
+                //        (long) getpid(), current_tick);
                 mark_ready_to_terminate();
                 return 0;
             } else {
-                fprintf(stderr, "[-] USER: PID %ld at %lld\n", (long) getpid(), current_tick);
+                //fprintf(stderr, "[-] USER: PID %ld at %lld\n", (long) getpid(), current_tick);
             }
         }
         if (next_req_time <= current_tick) {
@@ -93,12 +93,12 @@ int main(int argc, char* argv[]) {
             // our max claims. 
             next_req_time = next_request_time(current_tick, MAX_TIME_BETWEEN_REQ);
             if (is_should_request()) {
-                fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
-                        (long) getpid(), current_tick);
+                //fprintf(stderr, "[+] USER: Requesting resources in PID %ld at %lld\n",
+                //        (long) getpid(), current_tick);
                 make_request(abstract_pid, local_requested);
             } else {
-                fprintf(stderr, "[+] USER: Releasing resources in PID %ld at %lld\n",
-                        (long) getpid(), current_tick);
+                //fprintf(stderr, "[+] USER: Releasing resources in PID %ld at %lld\n",
+                //        (long) getpid(), current_tick);
                 make_release(abstract_pid);
             }
         }
