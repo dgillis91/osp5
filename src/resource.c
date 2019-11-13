@@ -18,6 +18,8 @@
 static void initialize_resource_tables();
 
 
+static int print_line_count = 0;
+
 static int semid;
 static int shid;
 
@@ -76,6 +78,10 @@ int destruct_resource_descriptors() {
 
 
 static void internal_print(int fd) {
+    if (print_line_count > 100000) {
+        return;
+    }
+    print_line_count += 90;
     /* TOTAL */
     int i, j;
     dprintf(fd, "OSS: TOTAL:\n");
@@ -319,15 +325,19 @@ void run_check(int fd) {
                     }
                 }
                 if (count < MAX_PROCESS_COUNT) {
-                    dprintf(fd, "OSS: Unable to grant resource (%d) for id (%d)\n",
-                            j, i);
-                    internal_print(fd);
+                    if (print_line_count <= 100000) {
+                        dprintf(fd, "OSS: Unable to grant resource (%d) for id (%d)\n",
+                                j, i);
+                        internal_print(fd);
+                    }
                 } else {
-                    dprintf(fd, "OSS: Able to grant resource (%d) for id (%d)\n",
-                            j, i);
+                    if (print_line_count <= 100000) {
+                        dprintf(fd, "OSS: Able to grant resource (%d) for id (%d)\n",
+                                j, i);
+                        internal_print(fd);
+                    }
                     descriptors->allocated[i][j] += request;
                     descriptors->available[j] -= request;
-                    internal_print(fd);
                 }
             }
         }

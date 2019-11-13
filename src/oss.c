@@ -67,9 +67,9 @@ int main(int argc, char* argv[]) {
             
             if (current_fork_value) {
                 set_first_unset_pid(current_fork_value);
-                dprintf(out_fd, "OSS: Forking child [%ld] at: [%u:%uT%lu]\n",
-                        (long) current_fork_value, get_seconds(), 
-                        get_nano(), current_time_nano);
+                //dprintf(out_fd, "OSS: Forking child [%ld] at: [%u:%uT%lu]\n",
+                //        (long) current_fork_value, get_seconds(), 
+                //        get_nano(), current_time_nano);
                 print_proc_handle(out_fd);
             }
             
@@ -99,8 +99,8 @@ int main(int argc, char* argv[]) {
         tick_clock(CLOCK_TICK_NANO);
     }
 
-    dprintf(out_fd, "OSS: Sleep\n");
-    sleep(10);
+    //dprintf(out_fd, "OSS: Sleep\n");
+    //sleep(10);
     destruct_clock();
     destruct_proc_handle(proc_shid);
     destruct_prog_opts();
